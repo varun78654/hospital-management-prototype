@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  background:linear-gradient(135deg,#0f9d58,#1db954);
+}
+.box{
+  background:white;
+  padding:40px;
+  border-radius:15px;
+  width:320px;
+  text-align:center;
+  animation:fade 0.8s ease-in-out;
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+button{
+  background:#0f9d58;
+  color:white;
+  border:none;
+  cursor:pointer;
+  transition:0.3s;
+}
+button:hover{
+  transform:scale(1.05);
+}
+@keyframes fade{
+  from{opacity:0; transform:translateY(20px);}
+  to{opacity:1;}
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>OTP Login</h2>
+<input type="tel" id="phone" placeholder="Phone Number" maxlength="10">
+<button onclick="sendOTP()">Send OTP</button>
+
+<div id="otpBox" style="display:none;">
+<input type="number" id="otp" placeholder="Enter OTP">
+<button onclick="verify()">Verify</button>
+</div>
+</div>
+
+<script>
+let generated;
+
+function sendOTP(){
+  let phone=document.getElementById("phone").value;
+  if(phone.length!=10){ alert("Enter valid number"); return; }
+  generated=Math.floor(1000+Math.random()*9000);
+  alert("OTP: "+generated);
+  document.getElementById("otpBox").style.display="block";
+  localStorage.setItem("phone",phone);
+}
+
+function verify(){
+  let entered=document.getElementById("otp").value;
+  if(entered==generated){
+    window.location="details.html";
+  }else{
+    alert("Wrong OTP");
+  }
+}
+</script>
+</body>
+</html>

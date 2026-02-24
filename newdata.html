@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CareJR AI - Live Screening</title>
+<style>
+
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:linear-gradient(135deg,#0f9d58,#1db954);
+  color:#333;
+}
+
+.container{
+  display:flex;
+  height:100vh;
+  animation:fade 0.6s ease-in-out;
+}
+
+.left{
+  width:30%;
+  background:white;
+  padding:20px;
+}
+
+.right{
+  width:70%;
+  padding:30px;
+  position:relative;
+}
+
+.divider{
+  width:3px;
+  background:#0f9d58;
+}
+
+h2{
+  color:#0f9d58;
+}
+
+.card{
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  margin-top:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  animation:slide 0.6s ease;
+}
+
+button{
+  padding:12px 20px;
+  border:none;
+  border-radius:8px;
+  background:#0f9d58;
+  color:white;
+  cursor:pointer;
+  margin-top:15px;
+  transition:0.3s;
+}
+
+button:hover{
+  transform:scale(1.05);
+}
+
+.status{
+  margin-top:15px;
+  font-weight:bold;
+  color:#0f9d58;
+}
+
+@keyframes slide{
+  from{opacity:0; transform:translateY(20px);}
+  to{opacity:1;}
+}
+
+@keyframes fade{
+  from{opacity:0;}
+  to{opacity:1;}
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- LEFT SIDE LOGIN DETAILS -->
+  <div class="left">
+    <h2>Patient Info</h2>
+    <p><b>Name:</b> <span id="name"></span></p>
+    <p><b>DOB:</b> <span id="dob"></span></p>
+    <p><b>State:</b> <span id="state"></span></p>
+    <p><b>Phone:</b> <span id="phone"></span></p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- RIGHT SIDE CAREJR -->
+  <div class="right">
+    <h2>CareJR.ai Live Screening</h2>
+
+    <div class="card">
+      <p>🎤 Listening to patient symptoms...</p>
+      <p>📡 Live body screening detecting sweating & coughing...</p>
+
+      <button onclick="startCare()">Start CareJR</button>
+
+      <div class="status" id="status"></div>
+
+      <button id="stopBtn" onclick="stopCare()" style="display:none;">
+        Stop & Generate Report
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+// Load Patient Data
+document.getElementById("name").innerText=localStorage.getItem("name");
+document.getElementById("dob").innerText=localStorage.getItem("dob");
+document.getElementById("state").innerText=localStorage.getItem("state");
+document.getElementById("phone").innerText=localStorage.getItem("phone");
+
+let symptoms="";
+let screeningActive=false;
+
+function startCare(){
+    screeningActive=true;
+    document.getElementById("status").innerText="CareJR Running...";
+    document.getElementById("stopBtn").style.display="inline-block";
+
+    // Simulated AI detection
+    setTimeout(()=>{
+        symptoms="Detected mild coughing & sweating symptoms.";
+        if(screeningActive)
+        document.getElementById("status").innerText="Analyzing symptoms...";
+    },2000);
+}
+
+function stopCare(){
+    screeningActive=false;
+
+    let report = `
+Patient: ${localStorage.getItem("name")}
+DOB: ${localStorage.getItem("dob")}
+State: ${localStorage.getItem("state")}
+Symptoms: ${symptoms}
+Conclusion: Mild Viral Risk
+Date: ${new Date().toLocaleString()}
+    `;
+
+    // Save Report in localStorage
+    let reports = JSON.parse(localStorage.getItem("reports")) || [];
+    reports.push(report);
+    localStorage.setItem("reports",JSON.stringify(reports));
+
+    alert("Report Generated & Saved to Previous Data ✅");
+
+    window.location="dashboard.html";
+}
+
+</script>
+</body>
+</html>

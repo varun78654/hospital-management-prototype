@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard</title>
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+}
+.nav{
+  height:60px;
+  background:#0f9d58;
+  color:white;
+  display:flex;
+  align-items:center;
+  padding:0 15px;
+}
+.menu{
+  font-size:28px;
+  cursor:pointer;
+}
+.sidebar{
+  position:fixed;
+  top:0;
+  left:-250px;
+  width:250px;
+  height:100%;
+  background:#1db954;
+  transition:0.4s;
+  padding-top:60px;
+}
+.sidebar a{
+  display:block;
+  padding:15px;
+  color:white;
+  text-decoration:none;
+  transition:0.3s;
+}
+.sidebar a:hover{
+  background:#0f9d58;
+}
+.content{
+  padding:20px;
+  animation:fade 1s;
+}
+@keyframes fade{
+  from{opacity:0;}
+  to{opacity:1;}
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+<span class="menu" onclick="toggle()">☰</span>
+<h3 style="margin-left:20px;">Dashboard</h3>
+</div>
+
+<div class="sidebar" id="side">
+<a href="previous.html">Previous Data</a>
+<a href="newdata.html">New Data</a>
+<a href="#">Bills</a>
+<a href="#">Lab Reports</a>
+<a href="tel:108">🚑 Emergency Ambulance - 108</a>
+</div>
+
+<div class="content">
+<h2>Welcome, <span id="username"></span> 👋</h2>
+<p><b>DOB:</b> <span id="dob"></span></p>
+<p><b>State:</b> <span id="state"></span></p>
+<p><b>Phone:</b> <span id="phone"></span></p>
+</div>
+
+<script>
+function toggle(){
+  let side=document.getElementById("side");
+  if(side.style.left=="0px"){
+    side.style.left="-250px";
+  }else{
+    side.style.left="0px";
+  }
+}
+
+document.getElementById("username").innerText=localStorage.getItem("name");
+document.getElementById("dob").innerText=localStorage.getItem("dob");
+document.getElementById("state").innerText=localStorage.getItem("state");
+document.getElementById("phone").innerText=localStorage.getItem("phone");
+</script>
+
+</body>
+</html>
