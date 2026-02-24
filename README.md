@@ -1,6 +1,6 @@
 CareJR.ai – AI Assisted Healthcare Screening System
 
-An interactive frontend-based healthcare screening system that enables OTP login, patient registration, AI-assisted symptom screening, and structured report generation.
+An interactive frontend-based healthcare screening system protoype that enables OTP login, patient registration, AI-assisted symptom screening, and structured report generation.
 
 Built using HTML, CSS, and JavaScript with smooth animations and green-themed healthcare UI.
 
