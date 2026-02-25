@@ -1,167 +1,303 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>CareJR AI - Live Screening</title>
-<style>
+<meta charset="UTF-8">
+<title>CareJR AI - New Medical Data</title>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
 body{
   margin:0;
   font-family:sans-serif;
-  background:linear-gradient(135deg,#0f9d58,#1db954);
-  color:#333;
+  background:linear-gradient(120deg,#0f9d58,#34a853);
 }
 
 .container{
   display:flex;
-  height:100vh;
-  animation:fade 0.6s ease-in-out;
+  min-height:100vh;
 }
 
 .left{
   width:30%;
-  background:white;
+  background:#0b7d45;
+  color:white;
   padding:20px;
 }
 
 .right{
   width:70%;
-  padding:30px;
-  position:relative;
-}
-
-.divider{
-  width:3px;
-  background:#0f9d58;
-}
-
-h2{
-  color:#0f9d58;
-}
-
-.card{
   background:white;
   padding:20px;
-  border-radius:10px;
-  margin-top:20px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-  animation:slide 0.6s ease;
+  border-radius:25px 0 0 25px;
+}
+
+input,textarea,select{
+  width:100%;
+  padding:8px;
+  margin:8px 0;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 
 button{
-  padding:12px 20px;
+  padding:8px 14px;
+  margin:5px 5px 0 0;
   border:none;
-  border-radius:8px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:0.3s;
   background:#0f9d58;
   color:white;
-  cursor:pointer;
-  margin-top:15px;
-  transition:0.3s;
 }
 
 button:hover{
+  background:#0c7c45;
   transform:scale(1.05);
 }
 
-.status{
+.voice-btn{ background:#ff9800; }
+.stop-btn{ background:#d9534f; }
+
+.preview{
+  background:#f4f4f4;
+  padding:12px;
   margin-top:15px;
-  font-weight:bold;
-  color:#0f9d58;
+  border-radius:8px;
 }
-
-@keyframes slide{
-  from{opacity:0; transform:translateY(20px);}
-  to{opacity:1;}
-}
-
-@keyframes fade{
-  from{opacity:0;}
-  to{opacity:1;}
-}
-
 </style>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- LEFT SIDE LOGIN DETAILS -->
-  <div class="left">
-    <h2>Patient Info</h2>
-    <p><b>Name:</b> <span id="name"></span></p>
-    <p><b>DOB:</b> <span id="dob"></span></p>
-    <p><b>State:</b> <span id="state"></span></p>
-    <p><b>Phone:</b> <span id="phone"></span></p>
-  </div>
+<div class="left">
+  <h2>CareJR AI</h2>
+  <p>Phone: <span id="phone"></span></p>
+  <p>User: <span id="user"></span></p>
+</div>
 
-  <div class="divider"></div>
+<div class="right">
 
-  <!-- RIGHT SIDE CAREJR -->
-  <div class="right">
-    <h2>CareJR.ai Live Screening</h2>
+<h2>New Medical Entry</h2>
 
-    <div class="card">
-      <p>🎤 Listening to patient symptoms...</p>
-      <p>📡 Live body screening detecting sweating & coughing...</p>
+<input type="text" id="patientName" placeholder="Patient Name">
+<input type="date" id="visitDate">
 
-      <button onclick="startCare()">Start CareJR</button>
+<select id="medicalStatus">
+  <option value="">Medical Status</option>
+  <option>Stable</option>
+  <option>Critical</option>
+  <option>Under Observation</option>
+</select>
 
-      <div class="status" id="status"></div>
+<textarea id="conversation" placeholder="Conversation will appear here..."></textarea>
 
-      <button id="stopBtn" onclick="stopCare()" style="display:none;">
-        Stop & Generate Report
-      </button>
-    </div>
+<button class="voice-btn" onclick="startConversation()">🎤 Start Conversation</button>
+<button class="stop-btn" onclick="stopConversation()">Stop</button>
 
-  </div>
+<textarea id="symptoms" placeholder="AI Detected Symptoms"></textarea>
+<textarea id="medicines" placeholder="AI Suggested Medicines"></textarea>
+<textarea id="exercise" placeholder="Exercise / Advice"></textarea>
 
+<input type="text" id="doctorSign" placeholder="Doctor Signature">
+
+<h3>Risk Percentage: <span id="riskScore">0</span>%</h3>
+
+<button onclick="generateReport()">Generate Report</button>
+
+<div id="afterGen" style="display:none;">
+  <button onclick="downloadPDF()">Download PDF</button>
+  <button onclick="storeReport()">Approve & Store</button>
+</div>
+
+<div id="preview" class="preview"></div>
+
+</div>
 </div>
 
 <script>
 
-// Load Patient Data
-document.getElementById("name").innerText=localStorage.getItem("name");
-document.getElementById("dob").innerText=localStorage.getItem("dob");
-document.getElementById("state").innerText=localStorage.getItem("state");
-document.getElementById("phone").innerText=localStorage.getItem("phone");
+// Load Login Info
+document.getElementById("phone").innerText = localStorage.getItem("phone") || "Not Found";
+document.getElementById("user").innerText = localStorage.getItem("name") || "User";
 
-let symptoms="";
-let screeningActive=false;
+/* =====================
+   AI PARSING ENGINE
+===================== */
 
-function startCare(){
-    screeningActive=true;
-    document.getElementById("status").innerText="CareJR Running...";
-    document.getElementById("stopBtn").style.display="inline-block";
+function analyzeConversation(text){
 
-    // Simulated AI detection
-    setTimeout(()=>{
-        symptoms="Detected mild coughing & sweating symptoms.";
-        if(screeningActive)
-        document.getElementById("status").innerText="Analyzing symptoms...";
-    },2000);
+  text = text.toLowerCase();
+
+  const db = {
+    fever:{weight:15, med:"Paracetamol"},
+    cough:{weight:10, med:"Cough Syrup"},
+    chest:{weight:25, med:"Aspirin"},
+    breathing:{weight:25, med:"Inhaler"},
+    headache:{weight:5, med:"Ibuprofen"},
+    vomiting:{weight:10, med:"ORS"}
+  };
+
+  let total=0;
+  let symptoms=[];
+  let medicines=[];
+
+  for(let key in db){
+    if(text.includes(key)){
+      total += db[key].weight;
+      symptoms.push(key);
+      medicines.push(db[key].med);
+    }
+  }
+
+  // Combination logic
+  if(text.includes("fever") && text.includes("cough")){
+    total += 15;
+  }
+
+  if(text.includes("chest") && text.includes("breathing")){
+    total += 20;
+  }
+
+  total = Math.min(total,100);
+
+  return {
+    symptoms:symptoms.join(", "),
+    medicines:[...new Set(medicines)].join(", "),
+    risk:total
+  };
 }
 
-function stopCare(){
-    screeningActive=false;
+function runAI(){
+  let text=document.getElementById("conversation").value;
+  let result=analyzeConversation(text);
 
-    let report = `
-Patient: ${localStorage.getItem("name")}
-DOB: ${localStorage.getItem("dob")}
-State: ${localStorage.getItem("state")}
-Symptoms: ${symptoms}
-Conclusion: Mild Viral Risk
-Date: ${new Date().toLocaleString()}
-    `;
+  document.getElementById("symptoms").value=result.symptoms;
+  document.getElementById("medicines").value=result.medicines;
+  document.getElementById("riskScore").innerText=result.risk;
+}
 
-    // Save Report in localStorage
-    let reports = JSON.parse(localStorage.getItem("reports")) || [];
-    reports.push(report);
-    localStorage.setItem("reports",JSON.stringify(reports));
+/* =====================
+   VOICE RECOGNITION
+===================== */
 
-    alert("Report Generated & Saved to Previous Data ✅");
+let recognition;
 
-    window.location="dashboard.html";
+function startConversation(){
+
+  if(!('webkitSpeechRecognition' in window)){
+    alert("Voice recognition only works in Chrome.");
+    return;
+  }
+
+  recognition = new webkitSpeechRecognition();
+  recognition.continuous=true;
+  recognition.interimResults=false;
+  recognition.lang="en-US";
+
+  recognition.start();
+
+  recognition.onresult=function(event){
+    let transcript=event.results[event.resultIndex][0].transcript;
+    document.getElementById("conversation").value += " " + transcript;
+    runAI();
+  };
+}
+
+function stopConversation(){
+  if(recognition){
+    recognition.stop();
+  }
+}
+
+/* =====================
+   REPORT GENERATION
+===================== */
+
+function generateReport(){
+
+  let report={
+    patientName:patientName.value,
+    visitDate:visitDate.value,
+    status:medicalStatus.value,
+    symptoms:symptoms.value,
+    medicines:medicines.value,
+    exercise:exercise.value,
+    doctor:doctorSign.value,
+    risk:riskScore.innerText
+  };
+
+  localStorage.setItem("currentReport",JSON.stringify(report));
+
+  preview.innerHTML=`
+    <h3>Medical Report Preview</h3>
+    <p><b>Patient:</b> ${report.patientName}</p>
+    <p><b>Date:</b> ${report.visitDate}</p>
+    <p><b>Status:</b> ${report.status}</p>
+    <p><b>Symptoms:</b> ${report.symptoms}</p>
+    <p><b>Medicines:</b> ${report.medicines}</p>
+    <p><b>Risk:</b> ${report.risk}%</p>
+    <p><b>Doctor:</b> ${report.doctor}</p>
+  `;
+
+  document.getElementById("afterGen").style.display="block";
+}
+
+/* =====================
+   STORE REPORT
+===================== */
+
+function storeReport(){
+
+  let reports=JSON.parse(localStorage.getItem("reports"))||[];
+  let current=JSON.parse(localStorage.getItem("currentReport"));
+
+  if(!current){
+    alert("Generate report first!");
+    return;
+  }
+
+  reports.push(current);
+  localStorage.setItem("reports",JSON.stringify(reports));
+
+  alert("Report Stored Successfully!");
+
+  // NO REDIRECT = NO ERROR
+}
+
+/* =====================
+   PDF DOWNLOAD
+===================== */
+
+function downloadPDF(){
+
+  const { jsPDF } = window.jspdf;
+  let data=JSON.parse(localStorage.getItem("currentReport"));
+
+  if(!data){
+    alert("Generate report first!");
+    return;
+  }
+
+  let doc=new jsPDF();
+
+  doc.setFontSize(16);
+  doc.text("CAREJR AI HOSPITAL REPORT",20,20);
+
+  doc.setFontSize(12);
+  doc.text("Patient: "+data.patientName,20,40);
+  doc.text("Date: "+data.visitDate,20,50);
+  doc.text("Status: "+data.status,20,60);
+  doc.text("Symptoms: "+data.symptoms,20,70);
+  doc.text("Medicines: "+data.medicines,20,80);
+  doc.text("Risk: "+data.risk+"%",20,90);
+  doc.text("Doctor: "+data.doctor,20,100);
+
+  doc.save(data.patientName+"_Report.pdf");
 }
 
 </script>
+
 </body>
 </html>
