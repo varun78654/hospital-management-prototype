@@ -13,22 +13,36 @@ Uses OTP-based login
 Collects patient demographic details
 
 Provides AI-powered live symptom screening (simulated)
+currently it can only says regarding the following if said like these
+1) Fever Case
+
+"I have fever since 2 days with headache and body pain."
+
+2) 🤧 Cold & Cough
+
+"I have cold, cough and mild fever."
+
+3) Stomach Problem
+
+"I have stomach pain and loose motions."
+
+4)🤕 Headache Only
+
+"I am having severe headache."
+
+5) 🤮 Vomiting
+
+"I am vomiting and feeling weak."
+
+6)🤒 Viral Infection Type
+
+"I have fever, weakness and sore t
 
 Generates structured health reports
 
 Stores previous reports
 
 Includes emergency ambulance access
-
-This project is ideal for:
-
-🏥 Hackathons
-
-💡 Healthcare AI demos
-
-🎓 Academic projects
-
-💻 Frontend learning
 
 ✨ Features
 🔐 OTP Authentication
