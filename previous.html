@@ -1,81 +1,174 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Login</title>
+<meta charset="UTF-8">
+<title>Previous Reports</title>
+
+<!-- jsPDF CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 body{
   margin:0;
+  padding:20px;
   font-family:sans-serif;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  background:linear-gradient(135deg,#0f9d58,#1db954);
+  background:linear-gradient(135deg,#e8f5e9,#ffffff);
 }
-.box{
+
+h2{
+  color:#0f9d58;
+}
+
+.report{
   background:white;
-  padding:40px;
-  border-radius:15px;
-  width:320px;
-  text-align:center;
-  animation:fade 0.8s ease-in-out;
-}
-input,button{
-  width:100%;
-  padding:12px;
-  margin:10px 0;
+  padding:15px;
+  margin:15px 0;
+  border-left:6px solid #0f9d58;
   border-radius:8px;
-  border:1px solid #ccc;
+  box-shadow:0 8px 20px rgba(0,0,0,0.1);
+  animation:fade 0.4s ease;
 }
+
+.report h3{
+  margin-top:0;
+  color:#0f9d58;
+}
+
+.report p{
+  margin:4px 0;
+}
+
 button{
-  background:#0f9d58;
-  color:white;
+  padding:8px 14px;
+  margin-right:8px;
   border:none;
+  border-radius:6px;
   cursor:pointer;
   transition:0.3s;
 }
-button:hover{
+
+.delete-btn{
+  background:#d9534f;
+  color:white;
+}
+
+.delete-btn:hover{
+  background:#c9302c;
   transform:scale(1.05);
 }
+
+.pdf-btn{
+  background:#0f9d58;
+  color:white;
+}
+
+.pdf-btn:hover{
+  background:#0c7c45;
+  transform:scale(1.05);
+}
+
+.no-report{
+  background:white;
+  padding:20px;
+  border-radius:6px;
+}
+
 @keyframes fade{
-  from{opacity:0; transform:translateY(20px);}
+  from{opacity:0; transform:translateY(15px);}
   to{opacity:1;}
 }
 </style>
 </head>
 <body>
 
-<div class="box">
-<h2>OTP Login</h2>
-<input type="tel" id="phone" placeholder="Phone Number" maxlength="10">
-<button onclick="sendOTP()">Send OTP</button>
+<h2>Previous Medical Reports</h2>
 
-<div id="otpBox" style="display:none;">
-<input type="number" id="otp" placeholder="Enter OTP">
-<button onclick="verify()">Verify</button>
-</div>
-</div>
+<div id="reportContainer"></div>
 
 <script>
-let generated;
 
-function sendOTP(){
-  let phone=document.getElementById("phone").value;
-  if(phone.length!=10){ alert("Enter valid number"); return; }
-  generated=Math.floor(1000+Math.random()*9000);
-  alert("OTP: "+generated);
-  document.getElementById("otpBox").style.display="block";
-  localStorage.setItem("phone",phone);
+function loadReports(){
+
+  const container=document.getElementById("reportContainer");
+  const reports=JSON.parse(localStorage.getItem("reports"))||[];
+
+  container.innerHTML="";
+
+  if(reports.length===0){
+    container.innerHTML='<div class="no-report">No Reports Available</div>';
+    return;
+  }
+
+  reports.forEach((report,index)=>{
+
+    const div=document.createElement("div");
+    div.className="report";
+
+    div.innerHTML=`
+      <h3>Report ${index+1}</h3>
+
+      <p><strong>Patient:</strong> ${report.patientName || "N/A"}</p>
+      <p><strong>Date:</strong> ${report.visitDate || "N/A"}</p>
+      <p><strong>Status:</strong> ${report.status || "N/A"}</p>
+      <p><strong>Symptoms:</strong> ${report.symptoms || "N/A"}</p>
+      <p><strong>Medicines:</strong> ${report.medicines || "N/A"}</p>
+      <p><strong>Exercise:</strong> ${report.exercise || "N/A"}</p>
+      <p><strong>Risk:</strong> ${report.risk || "0"}%</p>
+      <p><strong>Doctor:</strong> ${report.doctor || "N/A"}</p>
+
+      <br>
+      <button class="pdf-btn" onclick="downloadPDF(${index})">Download PDF</button>
+      <button class="delete-btn" onclick="deleteReport(${index})">Delete</button>
+    `;
+
+    container.appendChild(div);
+  });
 }
 
-function verify(){
-  let entered=document.getElementById("otp").value;
-  if(entered==generated){
-    window.location="details.html";
-  }else{
-    alert("Wrong OTP");
+function deleteReport(index){
+
+  let reports=JSON.parse(localStorage.getItem("reports"))||[];
+
+  if(confirm("Are you sure you want to delete this report?")){
+    reports.splice(index,1);
+    localStorage.setItem("reports",JSON.stringify(reports));
+    loadReports();
   }
 }
+
+function downloadPDF(index){
+
+  const { jsPDF } = window.jspdf;
+  const reports=JSON.parse(localStorage.getItem("reports"))||[];
+
+  const data = reports[index];
+
+  if(!data){
+    alert("Report not found!");
+    return;
+  }
+
+  const doc=new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("CAREJR AI HOSPITAL REPORT",20,20);
+
+  doc.setFontSize(12);
+  doc.text("Patient: " + (data.patientName || ""),20,40);
+  doc.text("Visit Date: " + (data.visitDate || ""),20,50);
+  doc.text("Medical Status: " + (data.status || ""),20,60);
+  doc.text("Symptoms: " + (data.symptoms || ""),20,70);
+  doc.text("Medicines: " + (data.medicines || ""),20,80);
+  doc.text("Exercise: " + (data.exercise || ""),20,90);
+  doc.text("Risk: " + (data.risk || "0") + "%",20,100);
+  doc.text("Doctor Signature: " + (data.doctor || ""),20,110);
+
+  doc.save((data.patientName || "Medical_Report") + ".pdf");
+}
+
+loadReports();
+
 </script>
+
 </body>
 </html>
